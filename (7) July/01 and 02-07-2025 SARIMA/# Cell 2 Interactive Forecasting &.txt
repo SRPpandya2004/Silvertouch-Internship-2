@@ -1,0 +1,82 @@
+# Cell 2: Interactive Forecasting & Plotting Explained
+
+This cell lets you choose how many years into the future to forecast and then visualizes both the hold-out test predictions and the extended forecast.
+
+---
+
+## 1) Imports
+
+- `matplotlib.pyplot` as plt – for plotting time‐series lines.  
+- `DateOffset` from `pandas.tseries.offsets` – to advance dates by whole months.  
+- `interact`, `IntSlider` from `ipywidgets` – to create an interactive slider widget in a Jupyter notebook.
+
+---
+
+## 2) The `forecast_and_plot(years)` Function
+
+### a) Compute Forecast Horizons
+
+- `h_future = years * 12`  
+  Calculates how many months of future data to predict.  
+- `h_total = h_test + h_future`  
+  Total forecast length: test period + future period.
+
+### b) One-Shot Forecast
+
+- `fc_all = auto_model.predict(n_periods=h_total)`  
+  Produce a single forecast array covering both the test and future horizons.  
+- `fc_test = fc_all[:h_test]`  
+  First slice is the test period forecast.  
+- `fc_future = fc_all[h_test:]`  
+  Remaining slice is the future‐years forecast.
+
+### c) Build Timestamp Indexes
+
+- `idx_test = df_test.index`  
+  The actual dates for the test set.  
+- `last_train = df_train.index[-1]`  
+  The final date in the training set.  
+- `freq = df.index.freq or pd.infer_freq(df.index) or 'MS'`  
+  Ensure we know the monthly frequency.  
+- `idx_future = pd.date_range(start=last_train + DateOffset(months=1), periods=h_future, freq=freq)`  
+  Create a new DateTimeIndex for each future month.
+
+### d) Convert to Pandas Series
+
+- `s_train = df_train['Production']` and `s_test = df_test['Production']`  
+  The historical training and actual test series.  
+- `s_fc_test = pd.Series(fc_test, index=idx_test)`  
+  Test‐period forecasts aligned with real dates.  
+- `s_fc_future = pd.Series(fc_future, index=idx_future)`  
+  Future forecasts aligned with the newly generated dates.
+
+### e) Plot Everything
+
+- Create a 12×5″ figure and an `ax` object.  
+- Plot:
+  - Training data (solid blue)  
+  - Actual test data (solid green)  
+  - Forecast on test (dashed red)  
+  - Forecast future (dashed red, thicker line)  
+- Extend the x-axis from the start of training all the way to the last forecasted future date.  
+- Add title, axis labels, legend, and grid.
+
+---
+
+## 3) Interactive Slider
+
+```python
+max1 = int(input("Enter Year limit : "))
+interact(
+    forecast_and_plot,
+    years=IntSlider(min=1, max=max1, step=1, value=2, description='Years')
+);
+```
+
+- Prompts you to enter a maximum number of years for forecasting.  
+- Sets up an `IntSlider` from 1 to that maximum.  
+- Each adjustment of the slider calls `forecast_and_plot(years)` automatically and redraws the chart with the new horizon.
+
+---
+
+With this interactive setup, you can visually explore how the SARIMA model performs over different future horizons, instantly updating the plot to reflect 1, 2, … up to your chosen number of years.
