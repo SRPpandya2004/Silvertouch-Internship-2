@@ -1,0 +1,16 @@
+from pytorch_lightning import seed_everything
+
+
+training = TimeSeriesDataSet(
+    train_df,#[lambda x: x.time_idx <= training_cutoff],
+    time_idx="time_idx",
+    target=target,
+    group_ids=["city"],
+    min_encoder_length=max_encoder_length // 2,
+    max_encoder_length=max_encoder_length,
+    max_prediction_length=max_prediction_length,
+    time_varying_known_reals=["time_idx"] + features,
+    time_varying_unknown_reals=[target],
+    target_normalizer=GroupNormalizer(groups=["city"]),
+    allow_missing_timesteps=True
+)
